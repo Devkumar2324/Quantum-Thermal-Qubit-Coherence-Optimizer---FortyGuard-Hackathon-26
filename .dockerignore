@@ -1,0 +1,51 @@
+# Docker ignore file — excludes unnecessary files from the build context.
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Misc
+.DS_Store
+*.pem
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev.log
+server.log
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+db/*.db
+db/*.db-journal
+
+# Tests
+coverage
+
+# Documentation (not needed in runtime image)
+docs
+scripts
+
+# Examples
+examples
+
+# Git
+.git
+.gitignore

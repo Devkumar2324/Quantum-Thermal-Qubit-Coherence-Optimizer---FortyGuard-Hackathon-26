@@ -1,0 +1,73 @@
+# docker-compose.yml
+# Quantum-Thermal Qubit Coherence Optimizer
+#
+# Usage:
+#   docker compose up              # Start all services
+#   docker compose up -d           # Start in detached mode
+#   docker compose down            # Stop all services
+#   docker compose logs -f web     # Follow web service logs
+#
+# The web service runs on http://localhost:3000
+
+services:
+  # ---- Web application (Next.js) ----
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: quantum-thermal-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/db/custom.db
+      - FORTYGUARD_API_KEY=${FORTYGUARD_API_KEY:-}
+      - FORTYGUARD_BASE_URL=${FORTYGUARD_BASE_URL:-https://api.fortyguard.com}
+    volumes:
+      - web-db:/app/db
+      - web-logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - quantum-thermal
+
+  # ---- Optional: PostgreSQL for production use ----
+  # Uncomment to use PostgreSQL instead of SQLite. Update DATABASE_URL
+  # in the web service to: postgresql://qtco:qtco@postgres:5432/qtco
+  #
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: quantum-thermal-postgres
+  #   environment:
+  #     - POSTGRES_USER=qtco
+  #     - POSTGRES_PASSWORD=qtco
+  #     - POSTGRES_DB=qtco
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U qtco"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - quantum-thermal
+
+volumes:
+  web-db:
+    driver: local
+  web-logs:
+    driver: local
+  # postgres-data:
+  #   driver: local
+
+networks:
+  quantum-thermal:
+    driver: bridge

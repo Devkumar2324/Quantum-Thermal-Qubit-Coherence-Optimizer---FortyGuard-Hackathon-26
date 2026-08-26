@@ -1,0 +1,101 @@
+// Quantum-Thermal Qubit Coherence Optimizer
+// Prisma schema - stores quantum configurations, thermal observations,
+// optimization experiments and AI agent decisions for reproducibility.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model QuantumConfiguration {
+  id              String   @id @default(cuid())
+  name            String
+  qubitType       String   @default("superconducting")
+  qubitCount      Int      @default(50)
+  qubitFrequency  Float    @default(5.0) // GHz
+  targetCoherence Float    @default(0.9)
+  targetT1        Float    @default(100.0) // microseconds
+  targetT2        Float    @default(80.0)
+  minCoherence    Float    @default(0.85)
+  temperatureMin  Float    @default(10.0) // mK
+  temperatureMax  Float    @default(100.0)
+  temperatureStep Float    @default(2.0)
+  noiseModel      String   @default("thermal-bosonic")
+  coolingModel    String   @default("carnot-approx")
+  noiseParams     String   @default("{}") // JSON
+  coolingParams   String   @default("{}") // JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  experiments Experiment[]
+}
+
+model ThermalObservation {
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  latitude   Float?
+  longitude  Float?
+  city       String?
+  temperature Float // Celsius
+  source     String   @default("simulation") // fortyguard | simulation | synthetic
+  quality    String   @default("good")
+  metadata   String   @default("{}") // JSON
+  scenario   String?
+
+  @@index([timestamp])
+  @@index([scenario])
+}
+
+model Experiment {
+  id              String   @id @default(cuid())
+  name            String
+  scenario        String   @default("normal")
+  ambientTemp     Float    @default(25.0) // Celsius
+  configId        String
+  config          QuantumConfiguration @relation(fields: [configId], references: [id])
+  tempMin         Float
+  tempMax         Float
+  tempStep        Float
+  coherenceWeight Float    @default(0.7)
+  energyWeight    Float    @default(0.3)
+  minCoherence    Float    @default(0.85)
+  status          String   @default("completed")
+  optimalTemp     Float?
+  optimalCoherence Float?
+  optimalEnergy   Float?
+  baselineEnergy  Float?
+  energySavings   Float?
+  paretoFrontier  String?  // JSON
+  sweepResults    String?  // JSON
+  createdAt       DateTime @default(now())
+
+  agentDecisions AgentDecision[]
+
+  @@index([configId])
+  @@index([scenario])
+}
+
+model AgentDecision {
+  id            String   @id @default(cuid())
+  experimentId  String?
+  experiment    Experiment? @relation(fields: [experimentId], references: [id])
+  timestamp     DateTime @default(now())
+  trigger       String   // thermal_alert | manual | scheduled
+  observation   String   // JSON summary of inputs
+  recommendation String  // natural language
+  recommendedTemp Float?
+  predictedCoherence Float?
+  predictedEnergy Float?
+  status        String   @default("logged")
+}
+
+model OptimizationCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  payload   String
+  createdAt DateTime @default(now())
+}
